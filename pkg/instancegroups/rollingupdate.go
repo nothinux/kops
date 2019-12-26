@@ -21,12 +21,11 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/kops/pkg/validation"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	api "k8s.io/kops/pkg/apis/kops"
 	"k8s.io/kops/pkg/cloudinstances"
+	"k8s.io/kops/pkg/validation"
 	"k8s.io/kops/upup/pkg/fi"
 )
 
@@ -61,6 +60,13 @@ type RollingUpdateCluster struct {
 
 	// ValidationTimeout is the maximum time to wait for the cluster to validate, once we start validation
 	ValidationTimeout time.Duration
+
+	// ValidateTickDuration is the amount of time to wait between cluster validation attempts
+	ValidateTickDuration time.Duration
+
+	// ValidateSuccessDuration is the amount of time a cluster must continue to validate successfully
+	// before updating the next node
+	ValidateSuccessDuration time.Duration
 }
 
 // RollingUpdate performs a rolling update on a K8s Cluster.

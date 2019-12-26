@@ -24,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/kops/pkg/validation"
-
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +37,7 @@ import (
 	"k8s.io/kops/pkg/featureflag"
 	"k8s.io/kops/pkg/instancegroups"
 	"k8s.io/kops/pkg/pretty"
+	"k8s.io/kops/pkg/validation"
 	"k8s.io/kops/upup/pkg/fi/cloudup"
 	"k8s.io/kops/util/pkg/tables"
 	"k8s.io/kubernetes/pkg/kubectl/util/i18n"
@@ -414,6 +413,9 @@ func RunRollingUpdateCluster(f *util.Factory, out io.Writer, options *RollingUpd
 		ClusterName:       options.ClusterName,
 		PostDrainDelay:    options.PostDrainDelay,
 		ValidationTimeout: options.ValidationTimeout,
+		// TODO should we expose this to the UI?
+		ValidateTickDuration:    30 * time.Second,
+		ValidateSuccessDuration: 10 * time.Second,
 	}
 	return d.RollingUpdate(groups, cluster, list)
 }

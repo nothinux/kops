@@ -189,11 +189,7 @@ func (r *RollingUpdateInstanceGroup) RollingUpdate(rollingUpdateData *RollingUpd
 		klog.Infof("waiting for %v after terminating instance", sleepAfterTerminate)
 		time.Sleep(sleepAfterTerminate)
 
-		if isBastion {
-			klog.Infof("Deleted a bastion instance, %s, and continuing with rolling-update.", instanceId)
-
-			continue
-		} else if rollingUpdateData.CloudOnly {
+		if rollingUpdateData.CloudOnly {
 			klog.Warningf("Not validating cluster as cloudonly flag is set.")
 
 		} else if featureflag.DrainAndValidateRollingUpdate.Enabled() {
@@ -227,25 +223,24 @@ func (r *RollingUpdateInstanceGroup) RollingUpdate(rollingUpdateData *RollingUpd
 
 // validateClusterWithDuration runs validation.ValidateCluster until either we get positive result or the timeout expires
 func (r *RollingUpdateInstanceGroup) validateClusterWithDuration(rollingUpdateData *RollingUpdateCluster, duration time.Duration) error {
-	// TODO should we expose this to the UI?
-	tickDuration := 30 * time.Second
 	// Try to validate cluster at least once, this will handle durations that are lower
 	// than our tick time
-	if r.tryValidateCluster(rollingUpdateData, duration, tickDuration) {
+	if r.tryValidateCluster(rollingUpdateData, duration, rollingUpdateData.ValidateTickDuration) {
 		return nil
 	}
 
 	timeout := time.After(duration)
-	tick := time.Tick(tickDuration)
+	ticker := time.NewTicker(rollingUpdateData.ValidateTickDuration)
+	defer ticker.Stop()
 	// Keep trying until we're timed out or got a result or got an error
 	for {
 		select {
 		case <-timeout:
 			// Got a timeout fail with a timeout error
 			return fmt.Errorf("cluster did not validate within a duration of %q", duration)
-		case <-tick:
+		case <-ticker.C:
 			// Got a tick, validate cluster
-			if r.tryValidateCluster(rollingUpdateData, duration, tickDuration) {
+			if r.tryValidateCluster(rollingUpdateData, duration, rollingUpdateData.ValidateTickDuration) {
 				return nil
 			}
 			// ValidateCluster didn't work yet, so let's try again
@@ -256,6 +251,12 @@ func (r *RollingUpdateInstanceGroup) validateClusterWithDuration(rollingUpdateDa
 
 func (r *RollingUpdateInstanceGroup) tryValidateCluster(rollingUpdateData *RollingUpdateCluster, duration time.Duration, tickDuration time.Duration) bool {
 	result, err := rollingUpdateData.ClusterValidator.Validate()
+
+	if err == nil && len(result.Failures) == 0 && rollingUpdateData.ValidateSuccessDuration > 0 {
+		klog.Infof("Cluster validated; revalidating in %s to make sure it does not flap.", rollingUpdateData.ValidateSuccessDuration)
+		time.Sleep(rollingUpdateData.ValidateSuccessDuration)
+		result, err = rollingUpdateData.ClusterValidator.Validate()
+	}
 
 	if err != nil {
 		klog.Infof("Cluster did not validate, will try again in %q until duration %q expires: %v.", tickDuration, duration, err)

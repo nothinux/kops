@@ -49,6 +49,14 @@ metadata:
     k8s-addon: openstack.addons.k8s.io
 rules:
 - apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - create
+  - update
+- apiGroups:
   - ""
   resources:
   - events
@@ -115,6 +123,7 @@ rules:
   verbs:
   - list
   - get
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -184,10 +193,10 @@ spec:
         image: "{{- if .ExternalCloudControllerManager.Image -}} {{ .ExternalCloudControllerManager.Image }} {{- else -}} {{OpenStackCCM}} {{- end -}}"
         args:
           - /bin/openstack-cloud-controller-manager
-          - --v={{ if .ExternalCloudControllerManager.LogLevel -}} {{ .ExternalCloudControllerManager.LogLevel }} {{- else }}2{{ end }}
+{{- range $arg := CloudControllerConfigArgv }}
+          - {{ $arg }}
+{{- end }}
           - --cloud-config=/etc/kubernetes/cloud.config
-          - --cloud-provider=openstack
-          - --use-service-account-credentials=true
           - --address=127.0.0.1
         resources:
           requests:

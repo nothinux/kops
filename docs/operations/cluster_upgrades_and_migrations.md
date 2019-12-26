@@ -15,6 +15,7 @@ At some point you will almost definitely want to upgrade the Kubernetes version 
 Take a snapshot of your EBS volumes; export all your data from kubectl etc.**
 
 Limitations:
+
 * kops splits etcd onto two volumes now: `main` and `events`.  We will keep the `main` data, but you will lose your events history.
 * Doubtless others not yet known - please open issues if you encounter them!
 
@@ -187,6 +188,7 @@ You will also need to release the old ElasticIP manually.
 This method provides zero-downtime when migrating a cluster from `kube-up` to `kops`. It does so by creating a logically separate `kops`-managed cluster in the existing `kube-up` VPC and then swapping the DNS entries (or your reverse proxy's upstream) to point to the new cluster's services.
 
 Limitations:
+
 - If you're using the default networking (`kubenet`), there is a account limit of 50 entries in a VPC's route table. If your cluster contains more than ~25 nodes, this strategy, as-is, will not work.
     + Shifting to a CNI-compatible overlay network like `weave`, `kopeio-vxlan` (`kopeio`), `calico`, `canal`, `romana`, and similar. See the [kops networking docs](../networking.md) for more information.
     + One solution is to gradually shift traffic from one cluster to the other, scaling down the number of nodes on the old cluster, and scaling up the number of nodes on the new cluster.
@@ -204,7 +206,7 @@ Limitations:
 4. Verify the planned changes with `kops update cluster cluster.example.com`
 5. Create the cluster with `kops update cluster cluster.example.com --yes`
 6. Wait around for the cluster to fully come up and be available. `k get nodes` should return `(master + minions) = 15` available nodes.
-7. (Optional) Create the Dashboard with `kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml`
+7. (Optional) Create the Dashboard with `kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml`
 8. Deploy the existing resource configuration to the new cluster.
 9. Confirm that pods on the new cluster are able to access remote resources.
     - For AWS-hosted services, add the generated `nodes.cluster.example.com` security group to the resources that may need it (i.e. ElastiCache, RDS, etc).

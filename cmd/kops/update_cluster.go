@@ -241,6 +241,17 @@ func RunUpdateCluster(f *util.Factory, clusterName string, out io.Writer, c *Upd
 		}
 		for i := range list.Items {
 			instanceGroups = append(instanceGroups, &list.Items[i])
+
+			// Try to guess the path for additional third party volume plugins in CoreOS and Flatcar
+			image := strings.ToLower(list.Items[i].Spec.Image)
+			if strings.Contains(image, "coreos") || strings.Contains(image, "flatcar") {
+				if cluster.Spec.Kubelet == nil {
+					cluster.Spec.Kubelet = &kops.KubeletConfigSpec{}
+				}
+				if cluster.Spec.Kubelet.VolumePluginDirectory == "" {
+					cluster.Spec.Kubelet.VolumePluginDirectory = "/var/lib/kubelet/volumeplugins/"
+				}
+			}
 		}
 	}
 
@@ -357,7 +368,7 @@ func RunUpdateCluster(f *util.Factory, clusterName string, out io.Writer, c *Upd
 				}
 			}
 			fmt.Fprintf(sb, " * the admin user is specific to Debian. If not using Debian please use the appropriate user based on your OS.\n")
-			fmt.Fprintf(sb, " * read about installing addons at: https://github.com/kubernetes/kops/blob/master/docs/operations/addons.md.\n")
+			fmt.Fprintf(sb, " * read about installing addons at: https://kops.sigs.k8s.io/operations/addons.\n")
 			fmt.Fprintf(sb, "\n")
 		}
 

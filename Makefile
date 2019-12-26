@@ -180,7 +180,7 @@ kops-gobindata: gobindata-tool ${BINDATA_TARGETS}
 
 UPUP_MODELS_BINDATA_SOURCES:=$(shell find upup/models/ | egrep -v "upup/models/bindata.go")
 upup/models/bindata.go: ${GOBINDATA} ${UPUP_MODELS_BINDATA_SOURCES}
-	cd ${GOPATH_1ST}/src/k8s.io/kops; ${GOBINDATA} -o $@ -pkg models -ignore="\\.DS_Store" -ignore="bindata\\.go" -ignore="vfs\\.go" -prefix upup/models/ upup/models/...
+	cd ${GOPATH_1ST}/src/k8s.io/kops; ${GOBINDATA} -o $@ -pkg models -ignore="\\.DS_Store" -ignore="bindata\\.go" -ignore="vfs\\.go" -prefix upup/models/ upup/models/... && GO111MODULE=on go run golang.org/x/tools/cmd/goimports -w -v upup/models/bindata.go
 
 # Build in a docker container with golang 1.X
 # Used to test we have not broken 1.X
@@ -553,25 +553,23 @@ verify-bazel:
 	hack/verify-bazel.sh
 
 .PHONY: verify-staticcheck
-verify-staticcheck:
+verify-staticcheck: ${BINDATA_TARGETS}
 	hack/verify-staticcheck.sh
 
 # ci target is for developers, it aims to cover all the CI jobs
 # verify-gendocs will call kops target
-# verify-package has to be after verify-gendoc, because with .gitignore for federation bindata
-# it bombs in travis. verify-gendoc generates the bindata file.
+# verify-package has to be after verify-gendocs, because with .gitignore for federation bindata
+# it bombs in travis. verify-gendocs generates the bindata file.
 .PHONY: ci
-ci: govet goimports verify-gofmt verify-gomod verify-goimports verify-boilerplate verify-bazel verify-misspelling nodeup examples test | verify-gendocs verify-packages verify-apimachinery
+ci: govet verify-gofmt verify-generate verify-gomod verify-goimports verify-boilerplate verify-bazel verify-misspelling nodeup examples test | verify-gendocs verify-packages verify-apimachinery
 	echo "Done!"
 
 # travis-ci is the target that travis-ci calls
 # we skip tasks that rely on bazel and are covered by other jobs
 #  verify-gofmt: uses bazel, covered by pull-kops-verify-gofmt
-#  verify-bazel: uses bazel, covered by pull-kops-verify-bazel
-#  govet: covered by pull-kops-verify-govet
-#  verify-boilerplate: covered by pull-kops-verify-boilerplate
+# govet needs to be after verify-goimports because it generates bindata.go
 .PHONY: travis-ci
-travis-ci: verify-misspelling verify-gomod verify-goimports nodeup examples test | verify-gendocs verify-packages verify-apimachinery
+travis-ci: verify-generate verify-gomod verify-goimports govet verify-boilerplate verify-bazel verify-misspelling nodeup examples test | verify-gendocs verify-packages verify-apimachinery
 	echo "Done!"
 
 .PHONY: pr
@@ -640,6 +638,10 @@ apimachinery-codegen:
 .PHONY: verify-apimachinery
 verify-apimachinery:
 	hack/verify-apimachinery.sh
+
+.PHONY: verify-generate
+verify-generate:
+	hack/verify-generate.sh
 
 # -----------------------------------------------------
 # kops-server

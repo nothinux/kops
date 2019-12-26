@@ -233,6 +233,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*ContainerdConfig)(nil), (*kops.ContainerdConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha2_ContainerdConfig_To_kops_ContainerdConfig(a.(*ContainerdConfig), b.(*kops.ContainerdConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*kops.ContainerdConfig)(nil), (*ContainerdConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_kops_ContainerdConfig_To_v1alpha2_ContainerdConfig(a.(*kops.ContainerdConfig), b.(*ContainerdConfig), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*DNSAccessSpec)(nil), (*kops.DNSAccessSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha2_DNSAccessSpec_To_kops_DNSAccessSpec(a.(*DNSAccessSpec), b.(*kops.DNSAccessSpec), scope)
 	}); err != nil {
@@ -1179,6 +1189,7 @@ func autoConvert_v1alpha2_CalicoNetworkingSpec_To_kops_CalicoNetworkingSpec(in *
 	out.PrometheusGoMetricsEnabled = in.PrometheusGoMetricsEnabled
 	out.PrometheusProcessMetricsEnabled = in.PrometheusProcessMetricsEnabled
 	out.MajorVersion = in.MajorVersion
+	out.IptablesBackend = in.IptablesBackend
 	out.IPIPMode = in.IPIPMode
 	out.TyphaPrometheusMetricsEnabled = in.TyphaPrometheusMetricsEnabled
 	out.TyphaPrometheusMetricsPort = in.TyphaPrometheusMetricsPort
@@ -1200,6 +1211,7 @@ func autoConvert_kops_CalicoNetworkingSpec_To_v1alpha2_CalicoNetworkingSpec(in *
 	out.PrometheusGoMetricsEnabled = in.PrometheusGoMetricsEnabled
 	out.PrometheusProcessMetricsEnabled = in.PrometheusProcessMetricsEnabled
 	out.MajorVersion = in.MajorVersion
+	out.IptablesBackend = in.IptablesBackend
 	out.IPIPMode = in.IPIPMode
 	out.TyphaPrometheusMetricsEnabled = in.TyphaPrometheusMetricsEnabled
 	out.TyphaPrometheusMetricsPort = in.TyphaPrometheusMetricsPort
@@ -1216,12 +1228,16 @@ func autoConvert_v1alpha2_CanalNetworkingSpec_To_kops_CanalNetworkingSpec(in *Ca
 	out.ChainInsertMode = in.ChainInsertMode
 	out.DefaultEndpointToHostAction = in.DefaultEndpointToHostAction
 	out.DisableFlannelForwardRules = in.DisableFlannelForwardRules
+	out.IptablesBackend = in.IptablesBackend
 	out.LogSeveritySys = in.LogSeveritySys
 	out.MTU = in.MTU
 	out.PrometheusGoMetricsEnabled = in.PrometheusGoMetricsEnabled
 	out.PrometheusMetricsEnabled = in.PrometheusMetricsEnabled
 	out.PrometheusMetricsPort = in.PrometheusMetricsPort
 	out.PrometheusProcessMetricsEnabled = in.PrometheusProcessMetricsEnabled
+	out.TyphaPrometheusMetricsEnabled = in.TyphaPrometheusMetricsEnabled
+	out.TyphaPrometheusMetricsPort = in.TyphaPrometheusMetricsPort
+	out.TyphaReplicas = in.TyphaReplicas
 	return nil
 }
 
@@ -1234,12 +1250,16 @@ func autoConvert_kops_CanalNetworkingSpec_To_v1alpha2_CanalNetworkingSpec(in *ko
 	out.ChainInsertMode = in.ChainInsertMode
 	out.DefaultEndpointToHostAction = in.DefaultEndpointToHostAction
 	out.DisableFlannelForwardRules = in.DisableFlannelForwardRules
+	out.IptablesBackend = in.IptablesBackend
 	out.LogSeveritySys = in.LogSeveritySys
 	out.MTU = in.MTU
 	out.PrometheusGoMetricsEnabled = in.PrometheusGoMetricsEnabled
 	out.PrometheusMetricsEnabled = in.PrometheusMetricsEnabled
 	out.PrometheusMetricsPort = in.PrometheusMetricsPort
 	out.PrometheusProcessMetricsEnabled = in.PrometheusProcessMetricsEnabled
+	out.TyphaPrometheusMetricsEnabled = in.TyphaPrometheusMetricsEnabled
+	out.TyphaPrometheusMetricsPort = in.TyphaPrometheusMetricsPort
+	out.TyphaReplicas = in.TyphaReplicas
 	return nil
 }
 
@@ -1630,6 +1650,7 @@ func autoConvert_v1alpha2_ClusterSpec_To_kops_ClusterSpec(in *ClusterSpec, out *
 	} else {
 		out.GossipConfig = nil
 	}
+	out.ContainerRuntime = in.ContainerRuntime
 	out.KubernetesVersion = in.KubernetesVersion
 	if in.Subnets != nil {
 		in, out := &in.Subnets, &out.Subnets
@@ -1713,6 +1734,15 @@ func autoConvert_v1alpha2_ClusterSpec_To_kops_ClusterSpec(in *ClusterSpec, out *
 		}
 	} else {
 		out.EtcdClusters = nil
+	}
+	if in.Containerd != nil {
+		in, out := &in.Containerd, &out.Containerd
+		*out = new(kops.ContainerdConfig)
+		if err := Convert_v1alpha2_ContainerdConfig_To_kops_ContainerdConfig(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Containerd = nil
 	}
 	if in.Docker != nil {
 		in, out := &in.Docker, &out.Docker
@@ -1932,6 +1962,7 @@ func autoConvert_kops_ClusterSpec_To_v1alpha2_ClusterSpec(in *kops.ClusterSpec, 
 	} else {
 		out.GossipConfig = nil
 	}
+	out.ContainerRuntime = in.ContainerRuntime
 	out.KubernetesVersion = in.KubernetesVersion
 	if in.Subnets != nil {
 		in, out := &in.Subnets, &out.Subnets
@@ -2015,6 +2046,15 @@ func autoConvert_kops_ClusterSpec_To_v1alpha2_ClusterSpec(in *kops.ClusterSpec, 
 		}
 	} else {
 		out.EtcdClusters = nil
+	}
+	if in.Containerd != nil {
+		in, out := &in.Containerd, &out.Containerd
+		*out = new(ContainerdConfig)
+		if err := Convert_kops_ContainerdConfig_To_v1alpha2_ContainerdConfig(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Containerd = nil
 	}
 	if in.Docker != nil {
 		in, out := &in.Docker, &out.Docker
@@ -2242,6 +2282,38 @@ func autoConvert_kops_ClusterSubnetSpec_To_v1alpha2_ClusterSubnetSpec(in *kops.C
 // Convert_kops_ClusterSubnetSpec_To_v1alpha2_ClusterSubnetSpec is an autogenerated conversion function.
 func Convert_kops_ClusterSubnetSpec_To_v1alpha2_ClusterSubnetSpec(in *kops.ClusterSubnetSpec, out *ClusterSubnetSpec, s conversion.Scope) error {
 	return autoConvert_kops_ClusterSubnetSpec_To_v1alpha2_ClusterSubnetSpec(in, out, s)
+}
+
+func autoConvert_v1alpha2_ContainerdConfig_To_kops_ContainerdConfig(in *ContainerdConfig, out *kops.ContainerdConfig, s conversion.Scope) error {
+	out.Address = in.Address
+	out.ConfigOverride = in.ConfigOverride
+	out.LogLevel = in.LogLevel
+	out.Root = in.Root
+	out.SkipInstall = in.SkipInstall
+	out.State = in.State
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_v1alpha2_ContainerdConfig_To_kops_ContainerdConfig is an autogenerated conversion function.
+func Convert_v1alpha2_ContainerdConfig_To_kops_ContainerdConfig(in *ContainerdConfig, out *kops.ContainerdConfig, s conversion.Scope) error {
+	return autoConvert_v1alpha2_ContainerdConfig_To_kops_ContainerdConfig(in, out, s)
+}
+
+func autoConvert_kops_ContainerdConfig_To_v1alpha2_ContainerdConfig(in *kops.ContainerdConfig, out *ContainerdConfig, s conversion.Scope) error {
+	out.Address = in.Address
+	out.ConfigOverride = in.ConfigOverride
+	out.LogLevel = in.LogLevel
+	out.Root = in.Root
+	out.SkipInstall = in.SkipInstall
+	out.State = in.State
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_kops_ContainerdConfig_To_v1alpha2_ContainerdConfig is an autogenerated conversion function.
+func Convert_kops_ContainerdConfig_To_v1alpha2_ContainerdConfig(in *kops.ContainerdConfig, out *ContainerdConfig, s conversion.Scope) error {
+	return autoConvert_kops_ContainerdConfig_To_v1alpha2_ContainerdConfig(in, out, s)
 }
 
 func autoConvert_v1alpha2_DNSAccessSpec_To_kops_DNSAccessSpec(in *DNSAccessSpec, out *kops.DNSAccessSpec, s conversion.Scope) error {
@@ -2992,6 +3064,7 @@ func autoConvert_v1alpha2_InstanceGroupSpec_To_kops_InstanceGroupSpec(in *Instan
 	out.RootVolumeType = in.RootVolumeType
 	out.RootVolumeIops = in.RootVolumeIops
 	out.RootVolumeOptimization = in.RootVolumeOptimization
+	out.RootVolumeDeleteOnTermination = in.RootVolumeDeleteOnTermination
 	if in.Volumes != nil {
 		in, out := &in.Volumes, &out.Volumes
 		*out = make([]*kops.VolumeSpec, len(*in))
@@ -3118,6 +3191,7 @@ func autoConvert_kops_InstanceGroupSpec_To_v1alpha2_InstanceGroupSpec(in *kops.I
 	out.RootVolumeType = in.RootVolumeType
 	out.RootVolumeIops = in.RootVolumeIops
 	out.RootVolumeOptimization = in.RootVolumeOptimization
+	out.RootVolumeDeleteOnTermination = in.RootVolumeDeleteOnTermination
 	if in.Volumes != nil {
 		in, out := &in.Volumes, &out.Volumes
 		*out = make([]*VolumeSpec, len(*in))
@@ -4084,6 +4158,12 @@ func Convert_kops_KuberouterNetworkingSpec_To_v1alpha2_KuberouterNetworkingSpec(
 
 func autoConvert_v1alpha2_LeaderElectionConfiguration_To_kops_LeaderElectionConfiguration(in *LeaderElectionConfiguration, out *kops.LeaderElectionConfiguration, s conversion.Scope) error {
 	out.LeaderElect = in.LeaderElect
+	out.LeaderElectLeaseDuration = in.LeaderElectLeaseDuration
+	out.LeaderElectRenewDeadlineDuration = in.LeaderElectRenewDeadlineDuration
+	out.LeaderElectResourceLock = in.LeaderElectResourceLock
+	out.LeaderElectResourceName = in.LeaderElectResourceName
+	out.LeaderElectResourceNamespace = in.LeaderElectResourceNamespace
+	out.LeaderElectRetryPeriod = in.LeaderElectRetryPeriod
 	return nil
 }
 
@@ -4094,6 +4174,12 @@ func Convert_v1alpha2_LeaderElectionConfiguration_To_kops_LeaderElectionConfigur
 
 func autoConvert_kops_LeaderElectionConfiguration_To_v1alpha2_LeaderElectionConfiguration(in *kops.LeaderElectionConfiguration, out *LeaderElectionConfiguration, s conversion.Scope) error {
 	out.LeaderElect = in.LeaderElect
+	out.LeaderElectLeaseDuration = in.LeaderElectLeaseDuration
+	out.LeaderElectRenewDeadlineDuration = in.LeaderElectRenewDeadlineDuration
+	out.LeaderElectResourceLock = in.LeaderElectResourceLock
+	out.LeaderElectResourceName = in.LeaderElectResourceName
+	out.LeaderElectResourceNamespace = in.LeaderElectResourceNamespace
+	out.LeaderElectRetryPeriod = in.LeaderElectRetryPeriod
 	return nil
 }
 
@@ -5057,6 +5143,7 @@ func Convert_kops_VolumeMountSpec_To_v1alpha2_VolumeMountSpec(in *kops.VolumeMou
 }
 
 func autoConvert_v1alpha2_VolumeSpec_To_kops_VolumeSpec(in *VolumeSpec, out *kops.VolumeSpec, s conversion.Scope) error {
+	out.DeleteOnTermination = in.DeleteOnTermination
 	out.Device = in.Device
 	out.Encrypted = in.Encrypted
 	out.Iops = in.Iops
@@ -5071,6 +5158,7 @@ func Convert_v1alpha2_VolumeSpec_To_kops_VolumeSpec(in *VolumeSpec, out *kops.Vo
 }
 
 func autoConvert_kops_VolumeSpec_To_v1alpha2_VolumeSpec(in *kops.VolumeSpec, out *VolumeSpec, s conversion.Scope) error {
+	out.DeleteOnTermination = in.DeleteOnTermination
 	out.Device = in.Device
 	out.Encrypted = in.Encrypted
 	out.Iops = in.Iops

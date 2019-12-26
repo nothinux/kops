@@ -135,6 +135,7 @@ func TestPrivateFlannel(t *testing.T) {
 func TestPrivateCalico(t *testing.T) {
 	runTestAWS(t, "privatecalico.example.com", "privatecalico", "v1alpha1", true, 1, true, false, nil)
 	runTestAWS(t, "privatecalico.example.com", "privatecalico", "v1alpha2", true, 1, true, false, nil)
+	runTestCloudformation(t, "privatecalico.example.com", "privatecalico", "v1alpha2", true, nil)
 }
 
 // TestPrivateCanal runs the test on a configuration with private topology, canal networking
@@ -223,6 +224,11 @@ func TestMixedInstancesASG(t *testing.T) {
 func TestMixedInstancesSpotASG(t *testing.T) {
 	runTestAWS(t, "mixedinstances.example.com", "mixed_instances_spot", "v1alpha2", false, 3, true, true, nil)
 	runTestCloudformation(t, "mixedinstances.example.com", "mixed_instances_spot", "v1alpha2", false, nil)
+}
+
+// TestContainerdCloudformation runs the test on a containerd configuration
+func TestContainerdCloudformation(t *testing.T) {
+	runTestCloudformation(t, "containerd.example.com", "containerd-cloudformation", "v1alpha2", false, nil)
 }
 
 func runTest(t *testing.T, h *testutils.IntegrationTestHarness, clusterName string, srcDir string, version string, private bool, zones int, expectedDataFilenames []string, tfFileName string, phase *cloudup.Phase, lifecycleOverrides []string) {
