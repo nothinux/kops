@@ -1,10 +1,1 @@
-cloudmock/aws/mockelbv2
-cmd/kops
-node-authorizer/pkg/authorizers/aws
 node-authorizer/pkg/server
-pkg/resources/openstack
-upup/pkg/fi
-upup/pkg/fi/cloudup
-upup/pkg/fi/cloudup/awstasks
-upup/pkg/kutil
-upup/tools/generators/pkg/codegen
