@@ -136,7 +136,7 @@ type ClusterSpec struct {
 	// HTTPProxy defines connection information to support use of a private cluster behind an forward HTTP Proxy
 	EgressProxy *EgressProxySpec `json:"egressProxy,omitempty"`
 	// SSHKeyName specifies a preexisting SSH key to use
-	SSHKeyName *string `json:"sshKeyName,omitempty"`
+	SSHKeyName string `json:"sshKeyName,omitempty"`
 	// EtcdClusters stores the configuration for each cluster
 	EtcdClusters []*EtcdClusterSpec `json:"etcdClusters,omitempty"`
 	// Component configurations
@@ -180,10 +180,6 @@ type ClusterSpec struct {
 	// UseHostCertificates will mount /etc/ssl/certs to inside needed containers.
 	// This is needed if some APIs do have self-signed certs
 	UseHostCertificates *bool `json:"useHostCertificates,omitempty"`
-	// SysctlParameters will configure kernel parameters using sysctl(8). When
-	// specified, each parameter must follow the form variable=value, the way
-	// it would appear in sysctl.conf.
-	SysctlParameters []string `json:"sysctlParameters,omitempty"`
 }
 
 // NodeAuthorizationSpec is used to node authorization

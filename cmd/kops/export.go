@@ -37,6 +37,9 @@ var (
 	exportShort = i18n.T(`Export configuration.`)
 )
 
+type ExportOptions struct {
+}
+
 func NewCmdExport(f *util.Factory, out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{

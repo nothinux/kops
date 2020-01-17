@@ -23,8 +23,7 @@ import (
 	"time"
 
 	"k8s.io/klog"
-	utilexec "k8s.io/utils/exec"
-	"k8s.io/utils/nsenter"
+	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 var (
@@ -185,18 +184,14 @@ func startKubeletService() error {
 	// We run systemctl from the hostfs so we don't need systemd in our image
 	// (and we don't risk version skew)
 
-	exec := utilexec.New()
+	exec := mount.NewOsExec()
 	if Containerized {
-		e, err := nsenter.NewNsenter(pathFor("/"), utilexec.New())
-		if err != nil {
-			return fmt.Errorf("error building nsenter executor: %v", err)
-		}
-		exec = e
+		exec = NewNsEnterExec()
 	}
 
 	systemctlCommand := "systemctl"
 
-	output, err := exec.Command(systemctlCommand, "status", "--no-block", "kubelet").CombinedOutput()
+	output, err := exec.Run(systemctlCommand, "status", "--no-block", "kubelet")
 	klog.V(2).Infof("'systemctl status kubelet' output:\n%s", string(output))
 	if err == nil {
 		klog.V(2).Infof("kubelet systemd service already running")
@@ -204,7 +199,7 @@ func startKubeletService() error {
 	}
 
 	klog.Infof("kubelet systemd service not running. Starting")
-	output, err = exec.Command(systemctlCommand, "start", "--no-block", "kubelet").CombinedOutput()
+	output, err = exec.Run(systemctlCommand, "start", "--no-block", "kubelet")
 	if err != nil {
 		return fmt.Errorf("error starting kubelet: %v\nOutput: %s", err, output)
 	}

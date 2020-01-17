@@ -18,7 +18,6 @@ package model
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"k8s.io/kops/upup/pkg/fi"
@@ -46,8 +45,12 @@ func (b *NetworkBuilder) Build(c *fi.ModelBuilderContext) error {
 		assetNames = append(assetNames, "bridge", "host-local", "loopback")
 
 	} else if networking.CNI != nil || networking.Weave != nil || networking.Flannel != nil || networking.Calico != nil || networking.Canal != nil || networking.Kuberouter != nil || networking.Romana != nil || networking.AmazonVPC != nil || networking.Cilium != nil {
-		assetNames = append(assetNames, "bridge", "host-local", "loopback", "ptp", "portmap")
+		assetNames = append(assetNames, "bridge", "host-local", "loopback", "ptp")
 		// Do we need tuning?
+
+		if b.IsKubernetesGTE("1.9") {
+			assetNames = append(assetNames, "portmap")
+		}
 
 		// TODO: Only when using flannel ?
 		assetNames = append(assetNames, "flannel")
@@ -68,21 +71,7 @@ func (b *NetworkBuilder) Build(c *fi.ModelBuilderContext) error {
 	}
 
 	if networking.Cilium != nil {
-		// systemd v238 includes the bpffs mount by default; and gives an error "has a bad unit file setting" if we try to mount it again (see mount_point_is_api)
-		var alreadyMounted bool
-		_, err := os.Stat("/sys/fs/bpf")
-		if err != nil {
-			if os.IsNotExist(err) {
-				alreadyMounted = false
-			} else {
-				return fmt.Errorf("error checking for /sys/fs/bpf: %v", err)
-			}
-		} else {
-			alreadyMounted = true
-		}
-
-		if !alreadyMounted {
-			unit := s(`
+		unit := s(`
 [Unit]
 Description=Cilium BPF mounts
 Documentation=http://docs.cilium.io/
@@ -95,16 +84,15 @@ Where=/sys/fs/bpf
 Type=bpf
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target		
 `)
 
-			service := &nodetasks.Service{
-				Name:       "sys-fs-bpf.mount",
-				Definition: unit,
-			}
-			service.InitDefaults()
-			c.AddTask(service)
+		service := &nodetasks.Service{
+			Name:       "sys-fs-bpf.mount",
+			Definition: unit,
 		}
+		service.InitDefaults()
+		c.AddTask(service)
 	}
 
 	return nil

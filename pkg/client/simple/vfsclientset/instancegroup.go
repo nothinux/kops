@@ -27,7 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog"
-	kopsapi "k8s.io/kops/pkg/apis/kops"
+	"k8s.io/kops/pkg/apis/kops"
+	api "k8s.io/kops/pkg/apis/kops"
 	"k8s.io/kops/pkg/apis/kops/v1alpha1"
 	"k8s.io/kops/pkg/apis/kops/validation"
 	kopsinternalversion "k8s.io/kops/pkg/client/clientset_generated/clientset/typed/kops/internalversion"
@@ -38,16 +39,16 @@ type InstanceGroupVFS struct {
 	commonVFS
 
 	clusterName string
-	cluster     *kopsapi.Cluster
+	cluster     *kops.Cluster
 }
 
 type InstanceGroupMirror interface {
-	WriteMirror(ig *kopsapi.InstanceGroup) error
+	WriteMirror(ig *kops.InstanceGroup) error
 }
 
 var _ InstanceGroupMirror = &InstanceGroupVFS{}
 
-func NewInstanceGroupMirror(cluster *kopsapi.Cluster, configBase vfs.Path) InstanceGroupMirror {
+func NewInstanceGroupMirror(cluster *kops.Cluster, configBase vfs.Path) InstanceGroupMirror {
 	if cluster == nil || cluster.Name == "" {
 		klog.Fatalf("cluster / cluster.Name is required")
 	}
@@ -63,12 +64,12 @@ func NewInstanceGroupMirror(cluster *kopsapi.Cluster, configBase vfs.Path) Insta
 	defaultReadVersion := v1alpha1.SchemeGroupVersion.WithKind(kind)
 	r.defaultReadVersion = &defaultReadVersion
 	r.validate = func(o runtime.Object) error {
-		return validation.ValidateInstanceGroup(o.(*kopsapi.InstanceGroup))
+		return validation.ValidateInstanceGroup(o.(*kops.InstanceGroup))
 	}
 	return r
 }
 
-func newInstanceGroupVFS(c *VFSClientset, cluster *kopsapi.Cluster) *InstanceGroupVFS {
+func newInstanceGroupVFS(c *VFSClientset, cluster *kops.Cluster) *InstanceGroupVFS {
 	if cluster == nil || cluster.Name == "" {
 		klog.Fatalf("cluster / cluster.Name is required")
 	}
@@ -84,14 +85,14 @@ func newInstanceGroupVFS(c *VFSClientset, cluster *kopsapi.Cluster) *InstanceGro
 	defaultReadVersion := v1alpha1.SchemeGroupVersion.WithKind(kind)
 	r.defaultReadVersion = &defaultReadVersion
 	r.validate = func(o runtime.Object) error {
-		return validation.ValidateInstanceGroup(o.(*kopsapi.InstanceGroup))
+		return validation.ValidateInstanceGroup(o.(*kops.InstanceGroup))
 	}
 	return r
 }
 
 var _ kopsinternalversion.InstanceGroupInterface = &InstanceGroupVFS{}
 
-func (c *InstanceGroupVFS) Get(name string, options metav1.GetOptions) (*kopsapi.InstanceGroup, error) {
+func (c *InstanceGroupVFS) Get(name string, options metav1.GetOptions) (*api.InstanceGroup, error) {
 	if options.ResourceVersion != "" {
 		return nil, fmt.Errorf("ResourceVersion not supported in InstanceGroupVFS::Get")
 	}
@@ -101,35 +102,35 @@ func (c *InstanceGroupVFS) Get(name string, options metav1.GetOptions) (*kopsapi
 		return nil, err
 	}
 	if o == nil {
-		return nil, errors.NewNotFound(schema.GroupResource{Group: kopsapi.GroupName, Resource: "InstanceGroup"}, name)
+		return nil, errors.NewNotFound(schema.GroupResource{Group: api.GroupName, Resource: "InstanceGroup"}, name)
 	}
-	ig := o.(*kopsapi.InstanceGroup)
+	ig := o.(*api.InstanceGroup)
 	c.addLabels(ig)
 
 	return ig, nil
 }
 
-func (c *InstanceGroupVFS) addLabels(ig *kopsapi.InstanceGroup) {
+func (c *InstanceGroupVFS) addLabels(ig *api.InstanceGroup) {
 	if ig.ObjectMeta.Labels == nil {
 		ig.ObjectMeta.Labels = make(map[string]string)
 	}
-	ig.ObjectMeta.Labels[kopsapi.LabelClusterName] = c.clusterName
+	ig.ObjectMeta.Labels[api.LabelClusterName] = c.clusterName
 }
 
-func (c *InstanceGroupVFS) List(options metav1.ListOptions) (*kopsapi.InstanceGroupList, error) {
-	list := &kopsapi.InstanceGroupList{}
+func (c *InstanceGroupVFS) List(options metav1.ListOptions) (*api.InstanceGroupList, error) {
+	list := &api.InstanceGroupList{}
 	items, err := c.list(list.Items, options)
 	if err != nil {
 		return nil, err
 	}
-	list.Items = items.([]kopsapi.InstanceGroup)
+	list.Items = items.([]api.InstanceGroup)
 	for i := range list.Items {
 		c.addLabels(&list.Items[i])
 	}
 	return list, nil
 }
 
-func (c *InstanceGroupVFS) Create(g *kopsapi.InstanceGroup) (*kopsapi.InstanceGroup, error) {
+func (c *InstanceGroupVFS) Create(g *api.InstanceGroup) (*api.InstanceGroup, error) {
 	err := c.create(c.cluster, g)
 	if err != nil {
 		return nil, err
@@ -137,7 +138,7 @@ func (c *InstanceGroupVFS) Create(g *kopsapi.InstanceGroup) (*kopsapi.InstanceGr
 	return g, nil
 }
 
-func (c *InstanceGroupVFS) Update(g *kopsapi.InstanceGroup) (*kopsapi.InstanceGroup, error) {
+func (c *InstanceGroupVFS) Update(g *api.InstanceGroup) (*api.InstanceGroup, error) {
 
 	old, err := c.Get(g.Name, metav1.GetOptions{})
 	if err != nil {
@@ -155,7 +156,7 @@ func (c *InstanceGroupVFS) Update(g *kopsapi.InstanceGroup) (*kopsapi.InstanceGr
 	return g, nil
 }
 
-func (c *InstanceGroupVFS) WriteMirror(g *kopsapi.InstanceGroup) error {
+func (c *InstanceGroupVFS) WriteMirror(g *api.InstanceGroup) error {
 	err := c.writeConfig(c.cluster, c.basePath.Join(g.Name), g)
 	if err != nil {
 		return fmt.Errorf("error writing %s: %v", c.kind, err)
@@ -176,6 +177,6 @@ func (r *InstanceGroupVFS) Watch(opts metav1.ListOptions) (watch.Interface, erro
 	return nil, fmt.Errorf("InstanceGroupVFS Watch not implemented for vfs store")
 }
 
-func (r *InstanceGroupVFS) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *kopsapi.InstanceGroup, err error) {
+func (r *InstanceGroupVFS) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *api.InstanceGroup, err error) {
 	return nil, fmt.Errorf("InstanceGroupVFS Patch not implemented for vfs store")
 }

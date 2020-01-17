@@ -24,9 +24,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog"
-	"k8s.io/kops/protokube/pkg/hostmount"
-	utilexec "k8s.io/utils/exec"
-	"k8s.io/utils/mount"
+	"k8s.io/kubernetes/pkg/util/mount"
+	nsenterutil "k8s.io/kubernetes/pkg/volume/util/nsenter"
+	utilsexec "k8s.io/utils/exec"
 	"k8s.io/utils/nsenter"
 )
 
@@ -115,20 +115,23 @@ func (k *VolumeMountController) safeFormatAndMount(volume *Volume, mountpoint st
 	safeFormatAndMount := &mount.SafeFormatAndMount{}
 
 	if Containerized {
-		ne, err := nsenter.NewNsenter(pathFor("/"), utilexec.New())
+		ne, err := nsenter.NewNsenter(pathFor("/"), utilsexec.New())
 		if err != nil {
-			return fmt.Errorf("error building ns-enter helper: %v", err)
+			return fmt.Errorf("error building ns-enter object: %v", err)
 		}
 
-		// Build mount & exec implementations that execute in the host namespaces
-		safeFormatAndMount.Interface = hostmount.New(ne)
-		safeFormatAndMount.Exec = ne
+		// This is a directory that is mounted identically on the container and the host; we don't have that.
+		sharedDir := "/no-shared-directories"
 
-		// Note that we don't use PathFor for operations going through safeFormatAndMount,
-		// because our mounter and nsenter will operate in the host
+		// Build mount & exec implementations that execute in the host namespaces
+		safeFormatAndMount.Interface = nsenterutil.NewMounter(sharedDir, ne)
+		safeFormatAndMount.Exec = NewNsEnterExec()
+
+		// Note that we don't use pathFor for operations going through safeFormatAndMount,
+		// because NewNsenterMounter and NewNsEnterExec will operate in the host
 	} else {
 		safeFormatAndMount.Interface = mount.New("")
-		safeFormatAndMount.Exec = utilexec.New()
+		safeFormatAndMount.Exec = mount.NewOsExec()
 	}
 
 	// Check if it is already mounted

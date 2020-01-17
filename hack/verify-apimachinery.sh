@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # Copyright 2019 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +23,7 @@ export API_OPTIONS="--verify-only"
 if make apimachinery-codegen; then
 	echo "apimachinery is up to date"
 else
-	echo -e "\n FAIL: - the verify-apimachinery.sh test failed, apimachinery is not up to date"
-	echo -e "\n FAIL: - please run the command 'make apimachinery'"
+	echo "\n FAIL: - the verify-apimachinery.sh test failed, apimachinery is not up to date"
+	echo "\n FAIL: - please run the command 'make apimachinery'"
 	exit 1
 fi

@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"k8s.io/kops/pkg/apis/kops"
+	"k8s.io/kops/upup/pkg/fi"
 	"k8s.io/kops/upup/pkg/fi/loader"
 )
 
@@ -32,6 +33,11 @@ var _ loader.OptionsBuilder = &NetworkingOptionsBuilder{}
 
 func (b *NetworkingOptionsBuilder) BuildOptions(o interface{}) error {
 	clusterSpec := o.(*kops.ClusterSpec)
+
+	k8sVersion, err := KubernetesVersion(clusterSpec)
+	if err != nil {
+		return err
+	}
 
 	options := o.(*kops.ClusterSpec)
 	if options.Kubelet == nil {
@@ -46,8 +52,12 @@ func (b *NetworkingOptionsBuilder) BuildOptions(o interface{}) error {
 	if networking.CNI != nil || networking.Weave != nil || networking.Flannel != nil || networking.Calico != nil || networking.Canal != nil || networking.Kuberouter != nil || networking.Romana != nil || networking.AmazonVPC != nil || networking.Cilium != nil || networking.LyftVPC != nil {
 		options.Kubelet.NetworkPluginName = "cni"
 
-		// ConfigureCBR0 flag removed from 1.5
-		options.Kubelet.ConfigureCBR0 = nil
+		if k8sVersion.Major == 1 && k8sVersion.Minor <= 4 {
+			options.Kubelet.ConfigureCBR0 = fi.Bool(false)
+		} else {
+			// ConfigureCBR0 flag removed from 1.5
+			options.Kubelet.ConfigureCBR0 = nil
+		}
 	}
 
 	if networking.GCE != nil {
@@ -56,7 +66,14 @@ func (b *NetworkingOptionsBuilder) BuildOptions(o interface{}) error {
 	}
 
 	if networking.Classic != nil {
-		return fmt.Errorf("classic networking not supported")
+		// The --configure-cbr0 option was deprecated in v1.4 and removed in v1.5.
+		// Only use it when "classic" is allowed (which, by cluster validation,
+		// is only allowed for clusters <v1.4).
+		if k8sVersion.Major == 1 && k8sVersion.Minor <= 4 {
+			options.Kubelet.ConfigureCBR0 = fi.Bool(true)
+		} else {
+			return fmt.Errorf("classic networking not supported after 1.4")
+		}
 	}
 
 	if networking.Romana != nil {

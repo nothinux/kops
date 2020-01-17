@@ -49,11 +49,6 @@ func TestValidateCIDR(t *testing.T) {
 			ExpectedDetail: "Could not be parsed as a CIDR (did you mean \"192.168.0.1/32\")",
 		},
 		{
-			Input:          "10.128.0.0/8",
-			ExpectedErrors: []string{"Invalid value::CIDR"},
-			ExpectedDetail: "Network contains bits outside prefix (did you mean \"10.0.0.0/8\")",
-		},
-		{
 			Input:          "",
 			ExpectedErrors: []string{"Invalid value::CIDR"},
 		},
@@ -117,11 +112,6 @@ func TestValidateSubnets(t *testing.T) {
 		},
 		{
 			Input: []kops.ClusterSubnetSpec{
-				{Name: "a", CIDR: "10.0.0.0/8"},
-			},
-		},
-		{
-			Input: []kops.ClusterSubnetSpec{
 				{Name: ""},
 			},
 			ExpectedErrors: []string{"Required value::Subnets[0].Name"},
@@ -145,12 +135,6 @@ func TestValidateSubnets(t *testing.T) {
 				{Name: "b", ProviderID: ""},
 			},
 			ExpectedErrors: []string{"Invalid value::Subnets"},
-		},
-		{
-			Input: []kops.ClusterSubnetSpec{
-				{Name: "a", CIDR: "10.128.0.0/8"},
-			},
-			ExpectedErrors: []string{"Invalid value::Subnets[0].CIDR"},
 		},
 	}
 	for _, g := range grid {

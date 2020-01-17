@@ -987,10 +987,6 @@ spec:
                     in the 'kube-system' namespace to be used for TLS bootstrapping
                     authentication
                   type: boolean
-                encryptionProviderConfig:
-                  description: EncryptionProviderConfig enables encryption at rest
-                    for secrets.
-                  type: string
                 etcdCaFile:
                   description: EtcdCAFile is the path to a ca certificate
                   type: string
@@ -2773,50 +2769,14 @@ spec:
                     connLimit:
                       format: int32
                       type: integer
-                    cpuLimit:
-                      description: CPULimit CPU limit of weave container.
-                      type: string
-                    cpuRequest:
-                      description: CPURequest CPU request of weave container. Default
-                        50m
-                      type: string
-                    memoryLimit:
-                      description: MemoryLimit memory limit of weave container. Default
-                        200Mi
-                      type: string
-                    memoryRequest:
-                      description: MemoryRequest memory request of weave container.
-                        Default 200Mi
-                      type: string
                     mtu:
                       format: int32
                       type: integer
                     netExtraArgs:
-                      description: NetExtraArgs are extra arguments that are passed
-                        to weave-kube.
                       type: string
                     noMasqLocal:
                       format: int32
                       type: integer
-                    npcCPULimit:
-                      description: NPCCPULimit CPU limit of weave npc container
-                      type: string
-                    npcCPURequest:
-                      description: NPCCPURequest CPU request of weave npc container.
-                        Default 50m
-                      type: string
-                    npcExtraArgs:
-                      description: NPCExtraArgs are extra arguments that are passed
-                        to weave-npc.
-                      type: string
-                    npcMemoryLimit:
-                      description: NPCMemoryLimit memory limit of weave npc container.
-                        Default 200Mi
-                      type: string
-                    npcMemoryRequest:
-                      description: NPCMemoryRequest memory request of weave npc container.
-                        Default 200Mi
-                      type: string
                   type: object
               type: object
             nodeAuthorization:
@@ -2925,13 +2885,6 @@ spec:
                       that are zonally scoped
                     type: string
                 type: object
-              type: array
-            sysctlParameters:
-              description: SysctlParameters will configure kernel parameters using
-                sysctl(8). When specified, each parameter must follow the form variable=value,
-                the way it would appear in sysctl.conf.
-              items:
-                type: string
               type: array
             target:
               description: Target allows for us to nest extra config for targets such

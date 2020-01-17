@@ -26,6 +26,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog"
@@ -90,7 +91,7 @@ func (c *commonVFS) create(cluster *kops.Cluster, i runtime.Object) error {
 
 	creationTimestamp := objectMeta.GetCreationTimestamp()
 	if creationTimestamp.IsZero() {
-		objectMeta.SetCreationTimestamp(metav1.NewTime(time.Now().UTC()))
+		objectMeta.SetCreationTimestamp(v1.NewTime(time.Now().UTC()))
 	}
 
 	err = c.writeConfig(cluster, c.basePath.Join(objectMeta.GetName()), i, vfs.WriteOptionCreate)
@@ -190,7 +191,7 @@ func (c *commonVFS) update(cluster *kops.Cluster, i runtime.Object) error {
 
 	creationTimestamp := objectMeta.GetCreationTimestamp()
 	if creationTimestamp.IsZero() {
-		objectMeta.SetCreationTimestamp(metav1.NewTime(time.Now().UTC()))
+		objectMeta.SetCreationTimestamp(v1.NewTime(time.Now().UTC()))
 	}
 
 	err = c.writeConfig(cluster, c.basePath.Join(objectMeta.GetName()), i, vfs.WriteOptionOnlyIfExists)

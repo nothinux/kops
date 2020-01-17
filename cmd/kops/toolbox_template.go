@@ -135,7 +135,7 @@ func runToolBoxTemplate(f *util.Factory, out io.Writer, options *toolboxTemplate
 		templates = append(templates, list...)
 	}
 
-	snippets := make(map[string]string)
+	snippets := make(map[string]string, 0)
 	for _, x := range options.snippetsPath {
 		list, err := expandFiles(utils.ExpandPath(x))
 		if err != nil {
@@ -212,7 +212,7 @@ func runToolBoxTemplate(f *util.Factory, out io.Writer, options *toolboxTemplate
 
 // newTemplateContext is responsible for loading the --values and build a context for the template
 func newTemplateContext(files []string, values []string, stringValues []string) (map[string]interface{}, error) {
-	context := make(map[string]interface{})
+	context := make(map[string]interface{}, 0)
 
 	for _, x := range files {
 		list, err := expandFiles(utils.ExpandPath(x))
@@ -225,7 +225,7 @@ func newTemplateContext(files []string, values []string, stringValues []string) 
 				return nil, fmt.Errorf("unable to configuration file: %s, error: %s", j, err)
 			}
 
-			ctx := make(map[string]interface{})
+			ctx := make(map[string]interface{}, 0)
 			if err := utils.YamlUnmarshal(content, &ctx); err != nil {
 				return nil, fmt.Errorf("unable decode the configuration file: %s, error: %v", j, err)
 			}

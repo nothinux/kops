@@ -65,8 +65,3 @@ func (m *Manifest) accept(visitor Visitor) error {
 	})
 	return err
 }
-
-// IsEmptyObject checks if the object has no keys set (i.e. `== {}`)
-func (m *Manifest) IsEmptyObject() bool {
-	return len(m.data) == 0
-}

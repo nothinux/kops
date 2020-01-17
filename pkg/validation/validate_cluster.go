@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
 	"k8s.io/kops/pkg/apis/kops"
+	"k8s.io/kops/pkg/apis/kops/util"
 	"k8s.io/kops/pkg/cloudinstances"
 	"k8s.io/kops/pkg/dns"
 )
@@ -266,7 +267,7 @@ func (v *ValidationCluster) validateNodes(cloudGroups map[string]*cloudinstances
 				continue
 			}
 
-			role := strings.ToLower(string(cloudGroup.InstanceGroup.Spec.Role))
+			role := util.GetNodeRole(node)
 			if role == "" {
 				role = "node"
 			}
@@ -281,6 +282,7 @@ func (v *ValidationCluster) validateNodes(cloudGroups map[string]*cloudinstances
 
 			ready := isNodeReady(node)
 
+			// TODO: Use instance group role instead...
 			if n.Role == "master" {
 				if !ready {
 					v.addError(&ValidationError{

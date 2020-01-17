@@ -33,16 +33,23 @@ limitations under the License.
 package mesh
 
 import (
-	errors "errors"
 	fmt "fmt"
-	io "io"
+
+	proto "github.com/golang/protobuf/proto"
+
 	math "math"
-	reflect "reflect"
-	strings "strings"
 
 	_ "github.com/gogo/protobuf/gogoproto"
+
+	errors "errors"
+
+	strings "strings"
+
+	reflect "reflect"
+
 	github_com_gogo_protobuf_sortkeys "github.com/gogo/protobuf/sortkeys"
-	proto "github.com/golang/protobuf/proto"
+
+	io "io"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

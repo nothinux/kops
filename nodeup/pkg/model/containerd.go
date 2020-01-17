@@ -38,18 +38,6 @@ type ContainerdBuilder struct {
 var _ fi.ModelBuilder = &ContainerdBuilder{}
 
 var containerdVersions = []packageVersion{
-	// 1.2.4 - Debian Stretch
-	{
-		PackageVersion: "1.2.4",
-		Name:           "containerd.io",
-		Distros:        []distros.Distribution{distros.DistributionDebian9},
-		Architectures:  []Architecture{ArchitectureAmd64},
-		Version:        "1.2.4-1",
-		Source:         "https://download.docker.com/linux/debian/dists/stretch/pool/stable/amd64/containerd.io_1.2.4-1_amd64.deb",
-		Hash:           "48c6ab0c908316af9a183de5aad64703bc516bdf",
-		Dependencies:   []string{"libseccomp2", "pigz"},
-	},
-
 	// 1.2.10 - Debian Stretch
 	{
 		PackageVersion: "1.2.10",
@@ -114,7 +102,7 @@ var containerdVersions = []packageVersion{
 				Hash:    "7de4211fa0dfd240d8827b93763e1eb5f0d56411",
 			},
 		},
-		Dependencies: []string{"libseccomp", "policycoreutils-python"},
+		Dependencies: []string{"libseccomp", "pigz", "policycoreutils-python"},
 	},
 
 	// 1.2.10 - CentOS / Rhel 8
@@ -129,9 +117,11 @@ var containerdVersions = []packageVersion{
 		Dependencies:   []string{"container-selinux", "libseccomp", "pigz"},
 	},
 
-	// TIP: When adding the next version, copy the previous version, string replace the version and run:
-	//   VERIFY_HASHES=1 go test ./nodeup/pkg/model -run TestContainerdPackageHashes
-	// (you might want to temporarily comment out older versions on a slower connection and then validate)
+	// TIP: When adding the next version, copy the previous
+	// version, string replace the version, run `VERIFY_HASHES=1
+	// go test ./nodeup/pkg/model` (you might want to temporarily
+	// comment out older versions on a slower connection), and
+	// then validate the dependencies etc
 }
 
 func (b *ContainerdBuilder) containerdVersion() (string, error) {

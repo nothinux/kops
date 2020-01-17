@@ -85,13 +85,11 @@ func TestDockerPackageHashes(t *testing.T) {
 	}
 
 	for _, dockerVersion := range dockerVersions {
-		t.Run(dockerVersion.Source, func(t *testing.T) {
-			verifyPackageHash(t, dockerVersion.Source, dockerVersion.Hash)
+		verifyPackageHash(t, dockerVersion.Source, dockerVersion.Hash)
 
-			for _, p := range dockerVersion.ExtraPackages {
-				verifyPackageHash(t, p.Source, p.Hash)
-			}
-		})
+		for _, p := range dockerVersion.ExtraPackages {
+			verifyPackageHash(t, p.Source, p.Hash)
+		}
 	}
 }
 

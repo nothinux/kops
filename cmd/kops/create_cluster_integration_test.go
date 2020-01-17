@@ -34,7 +34,6 @@ import (
 	"k8s.io/kops/pkg/apis/kops"
 	"k8s.io/kops/pkg/kopscodecs"
 	"k8s.io/kops/pkg/testutils"
-	"k8s.io/kops/pkg/testutils/golden"
 	"k8s.io/kops/upup/pkg/fi"
 	"k8s.io/kops/upup/pkg/fi/cloudup/awsup"
 )
@@ -244,5 +243,5 @@ func runCreateClusterIntegrationTest(t *testing.T, srcDir string, version string
 	}
 
 	actualYAML := strings.Join(yamlAll, "\n\n---\n\n")
-	golden.AssertMatchesFile(t, actualYAML, path.Join(srcDir, expectedClusterPath))
+	testutils.AssertMatchesFile(t, actualYAML, path.Join(srcDir, expectedClusterPath))
 }

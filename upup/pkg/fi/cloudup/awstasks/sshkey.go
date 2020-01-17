@@ -196,9 +196,6 @@ func (e *SSHKey) IsExistingKey() bool {
 }
 
 func (e *SSHKey) TerraformLink() *terraform.Literal {
-	if e.NoSSHKey() {
-		return nil
-	}
 	if e.IsExistingKey() {
 		return terraform.LiteralFromStringValue(*e.Name)
 	}
@@ -207,20 +204,16 @@ func (e *SSHKey) TerraformLink() *terraform.Literal {
 }
 
 func (_ *SSHKey) RenderCloudformation(t *cloudformation.CloudformationTarget, a, e, changes *SSHKey) error {
-	if e.NoSSHKey() {
-		return nil
-	}
-
 	cloud := t.Cloud.(awsup.AWSCloud)
 
 	klog.Warningf("Cloudformation does not manage SSH keys; pre-creating SSH key")
 
-	keypair, err := e.find(cloud)
+	a, err := e.find(cloud)
 	if err != nil {
 		return err
 	}
 
-	if keypair == nil {
+	if a == nil {
 		err := e.createKeypair(cloud)
 		if err != nil {
 			return err
@@ -228,8 +221,4 @@ func (_ *SSHKey) RenderCloudformation(t *cloudformation.CloudformationTarget, a,
 	}
 
 	return nil
-}
-
-func (e *SSHKey) NoSSHKey() bool {
-	return *e == SSHKey{}
 }

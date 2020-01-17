@@ -58,21 +58,14 @@ func (b *KubeAPIServerBuilder) Build(c *fi.ModelBuilderContext) error {
 	}
 
 	if b.Cluster.Spec.EncryptionConfig != nil {
-		if *b.Cluster.Spec.EncryptionConfig {
-			encryptionConfigPath := fi.String(filepath.Join(b.PathSrvKubernetes(), "encryptionconfig.yaml"))
-
-			if b.IsKubernetesGTE("1.13") {
-				b.Cluster.Spec.KubeAPIServer.EncryptionProviderConfig = encryptionConfigPath
-			} else {
-				b.Cluster.Spec.KubeAPIServer.ExperimentalEncryptionProviderConfig = encryptionConfigPath
-			}
-
+		if *b.Cluster.Spec.EncryptionConfig && b.IsKubernetesGTE("1.7") {
+			b.Cluster.Spec.KubeAPIServer.ExperimentalEncryptionProviderConfig = fi.String(filepath.Join(b.PathSrvKubernetes(), "encryptionconfig.yaml"))
 			key := "encryptionconfig"
 			encryptioncfg, _ := b.SecretStore.Secret(key)
 			if encryptioncfg != nil {
 				contents := string(encryptioncfg.Data)
 				t := &nodetasks.File{
-					Path:     *encryptionConfigPath,
+					Path:     *b.Cluster.Spec.KubeAPIServer.ExperimentalEncryptionProviderConfig,
 					Contents: fi.NewStringResource(contents),
 					Mode:     fi.String("600"),
 					Type:     nodetasks.FileType_File,
@@ -282,7 +275,7 @@ func (b *KubeAPIServerBuilder) writeAuthenticationConfig(c *fi.ModelBuilderConte
 		return nil
 	}
 
-	return fmt.Errorf("unrecognized authentication config %v", b.Cluster.Spec.Authentication)
+	return fmt.Errorf("Unrecognized authentication config %v", b.Cluster.Spec.Authentication)
 }
 
 // buildPod is responsible for generating the kube-apiserver pod and thus manifest file
@@ -319,7 +312,7 @@ func (b *KubeAPIServerBuilder) buildPod() (*v1.Pod, error) {
 		kubeAPIServer.KubeletClientKey = filepath.Join(b.PathSrvKubernetes(), "kubelet-api-key.pem")
 	}
 
-	{
+	if b.IsKubernetesGTE("1.7") {
 		certPath := filepath.Join(b.PathSrvKubernetes(), "apiserver-aggregator.cert")
 		kubeAPIServer.ProxyClientCertFile = &certPath
 		keyPath := filepath.Join(b.PathSrvKubernetes(), "apiserver-aggregator.key")
@@ -327,7 +320,6 @@ func (b *KubeAPIServerBuilder) buildPod() (*v1.Pod, error) {
 	}
 
 	// APIServer aggregation options
-	// TODO fix Test_KubeAPIServer_Builder so we can remove the conditional
 	if b.IsKubernetesGTE("1.7") {
 		cert, err := b.KeyStore.FindCert("apiserver-aggregator-ca")
 		if err != nil {

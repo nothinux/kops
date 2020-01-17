@@ -17,6 +17,8 @@ limitations under the License.
 package components
 
 import (
+	"fmt"
+
 	"k8s.io/kops/pkg/apis/kops"
 	"k8s.io/kops/upup/pkg/fi"
 	"k8s.io/kops/upup/pkg/fi/loader"
@@ -37,6 +39,10 @@ func (b *KubeSchedulerOptionsBuilder) BuildOptions(o interface{}) error {
 
 	config := clusterSpec.KubeScheduler
 
+	if config.UsePolicyConfigMap != nil && b.IsKubernetesLT("v1.7.0") {
+		return fmt.Errorf("usePolicyConfigMap is only supported in Kubernetes 1.7.0 or later")
+	}
+
 	if config.LogLevel == 0 {
 		// TODO: No way to set to 0?
 		config.LogLevel = 2
@@ -54,6 +60,13 @@ func (b *KubeSchedulerOptionsBuilder) BuildOptions(o interface{}) error {
 		//  Doesn't seem to be any real downside to always doing a leader election
 		config.LeaderElection = &kops.LeaderElectionConfiguration{
 			LeaderElect: fi.Bool(true),
+		}
+	}
+
+	if config.Master == "" {
+		if b.IsKubernetesLT("1.6") {
+			// Backwards compatibility with pre-RBAC/pre-1.6 way of doing things
+			config.Master = "http://127.0.0.1:8080"
 		}
 	}
 

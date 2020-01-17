@@ -22,7 +22,7 @@ import (
 
 	"k8s.io/kops/pkg/apis/kops"
 	"k8s.io/kops/pkg/apis/nodeup"
-	"k8s.io/kops/pkg/testutils/golden"
+	"k8s.io/kops/pkg/testutils"
 )
 
 func Test_ProxyFunc(t *testing.T) {
@@ -141,7 +141,7 @@ func TestBootstrapUserData(t *testing.T) {
 			continue
 		}
 
-		golden.AssertMatchesFile(t, actual, x.ExpectedFilePath)
+		testutils.AssertMatchesFile(t, actual, x.ExpectedFilePath)
 	}
 }
 

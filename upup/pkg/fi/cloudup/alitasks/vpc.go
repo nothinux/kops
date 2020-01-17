@@ -61,7 +61,7 @@ func (e *VPC) Find(c *fi.Context) (*VPC, error) {
 		return nil, fmt.Errorf("error listing VPCs: %v", err)
 	}
 
-	if len(vpcs) == 0 {
+	if vpcs == nil || len(vpcs) == 0 {
 		return nil, nil
 	}
 

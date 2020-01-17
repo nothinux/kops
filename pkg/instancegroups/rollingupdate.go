@@ -47,7 +47,7 @@ type RollingUpdateCluster struct {
 	// K8sClient is the kubernetes client, used for draining etc
 	K8sClient kubernetes.Interface
 
-	// ClusterValidator is used for validating the cluster. Unused if CloudOnly
+	// ClusterValidator is used for validating the cluster. Unused if DrainAndValidateRollingUpdate disabled or CloudOnly
 	ClusterValidator validation.ClusterValidator
 
 	FailOnDrainError bool
@@ -148,28 +148,42 @@ func (c *RollingUpdateCluster) RollingUpdate(groups map[string]*cloudinstances.C
 		}
 	}
 
-	// Upgrade nodes
+	// Upgrade nodes, with greater parallelism
 	{
+		var wg sync.WaitGroup
+
 		// We run nodes in series, even if they are in separate instance groups
 		// typically they will not being separate instance groups. If you roll the nodes in parallel
 		// you can get into a scenario where you can evict multiple statefulset pods from the same
 		// statefulset at the same time. Further improvements needs to be made to protect from this as
 		// well.
 
-		for k := range nodeGroups {
-			results[k] = fmt.Errorf("function panic nodes")
-		}
+		wg.Add(1)
 
-		for k, group := range nodeGroups {
-			g, err := NewRollingUpdateInstanceGroup(c.Cloud, group)
-			if err == nil {
-				err = g.RollingUpdate(c, cluster, false, c.NodeInterval, c.ValidationTimeout)
+		go func() {
+			for k := range nodeGroups {
+				resultsMutex.Lock()
+				results[k] = fmt.Errorf("function panic nodes")
+				resultsMutex.Unlock()
 			}
 
-			results[k] = err
+			defer wg.Done()
 
-			// TODO: Bail on error?
-		}
+			for k, group := range nodeGroups {
+				g, err := NewRollingUpdateInstanceGroup(c.Cloud, group)
+				if err == nil {
+					err = g.RollingUpdate(c, cluster, false, c.NodeInterval, c.ValidationTimeout)
+				}
+
+				resultsMutex.Lock()
+				results[k] = err
+				resultsMutex.Unlock()
+
+				// TODO: Bail on error?
+			}
+		}()
+
+		wg.Wait()
 	}
 
 	for _, err := range results {

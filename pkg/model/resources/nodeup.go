@@ -53,13 +53,12 @@ NODEUP_HASH={{ NodeUpSourceHash }}
 {{ ProxyEnv }}
 
 function ensure-install-dir() {
-  INSTALL_DIR="/opt/kops"
-  # On ContainerOS, we install under /var/lib/toolbox; /opt is ro and noexec
+  INSTALL_DIR="/var/cache/kubernetes-install"
+  # On ContainerOS, we install to /var/lib/toolbox install (because of noexec)
   if [[ -d /var/lib/toolbox ]]; then
-    INSTALL_DIR="/var/lib/toolbox/kops"
+    INSTALL_DIR="/var/lib/toolbox/kubernetes-install"
   fi
-  mkdir -p ${INSTALL_DIR}/bin
-  mkdir -p ${INSTALL_DIR}/conf
+  mkdir -p ${INSTALL_DIR}
   cd ${INSTALL_DIR}
 }
 
@@ -141,7 +140,6 @@ function try-download-release() {
 
 function download-release() {
   # In case of failure checking integrity of release, retry.
-  cd ${INSTALL_DIR}/bin
   until try-download-release; do
     sleep 15
     echo "Couldn't download release. Retrying..."
@@ -149,7 +147,7 @@ function download-release() {
 
   echo "Running nodeup"
   # We can't run in the foreground because of https://github.com/docker/docker/issues/23793
-  ( cd ${INSTALL_DIR}/bin; ./nodeup --install-systemd-unit --conf=${INSTALL_DIR}/conf/kube_env.yaml --v=8  )
+  ( cd ${INSTALL_DIR}; ./nodeup --install-systemd-unit --conf=${INSTALL_DIR}/kube_env.yaml --v=8  )
 }
 
 ####################################################################################
@@ -159,15 +157,15 @@ function download-release() {
 echo "== nodeup node config starting =="
 ensure-install-dir
 
-cat > conf/cluster_spec.yaml << '__EOF_CLUSTER_SPEC'
+cat > cluster_spec.yaml << '__EOF_CLUSTER_SPEC'
 {{ ClusterSpec }}
 __EOF_CLUSTER_SPEC
 
-cat > conf/ig_spec.yaml << '__EOF_IG_SPEC'
+cat > ig_spec.yaml << '__EOF_IG_SPEC'
 {{ IGSpec }}
 __EOF_IG_SPEC
 
-cat > conf/kube_env.yaml << '__EOF_KUBE_ENV'
+cat > kube_env.yaml << '__EOF_KUBE_ENV'
 {{ KubeEnv }}
 __EOF_KUBE_ENV
 

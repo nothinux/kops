@@ -49,10 +49,12 @@ func (b *KubeControllerManagerBuilder) Build(c *fi.ModelBuilderContext) error {
 		return nil
 	}
 
-	// Include the CA Key
+	// If we're using the CertificateSigner, include the CA Key
 	// @TODO: use a per-machine key?  use KMS?
-	if err := b.BuildPrivateKeyTask(c, fi.CertificateId_CA, "ca.key"); err != nil {
-		return err
+	if b.useCertificateSigner() {
+		if err := b.BuildPrivateKeyTask(c, fi.CertificateId_CA, "ca.key"); err != nil {
+			return err
+		}
 	}
 
 	{
@@ -101,6 +103,12 @@ func (b *KubeControllerManagerBuilder) Build(c *fi.ModelBuilderContext) error {
 	return nil
 }
 
+// useCertificateSigner checks to see if we need to use the certificate signer for the controller manager
+func (b *KubeControllerManagerBuilder) useCertificateSigner() bool {
+	// For now, we enable this on 1.6 and later
+	return b.IsKubernetesGTE("1.6")
+}
+
 // buildPod is responsible for building the kubernetes manifest for the controller-manager
 func (b *KubeControllerManagerBuilder) buildPod() (*v1.Pod, error) {
 
@@ -121,10 +129,12 @@ func (b *KubeControllerManagerBuilder) buildPod() (*v1.Pod, error) {
 	// Add kubeconfig flag
 	flags = append(flags, "--kubeconfig="+"/var/lib/kube-controller-manager/kubeconfig")
 
-	// Configure CA certificate to be used to sign keys
-	flags = append(flags, []string{
-		"--cluster-signing-cert-file=" + filepath.Join(b.PathSrvKubernetes(), "ca.crt"),
-		"--cluster-signing-key-file=" + filepath.Join(b.PathSrvKubernetes(), "ca.key")}...)
+	// Configure CA certificate to be used to sign keys, if we are using CSRs
+	if b.useCertificateSigner() {
+		flags = append(flags, []string{
+			"--cluster-signing-cert-file=" + filepath.Join(b.PathSrvKubernetes(), "ca.crt"),
+			"--cluster-signing-key-file=" + filepath.Join(b.PathSrvKubernetes(), "ca.key")}...)
+	}
 
 	pod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{

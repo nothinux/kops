@@ -27,12 +27,7 @@ import (
 )
 
 func Test_RunEtcdManagerBuilder(t *testing.T) {
-	tests := []string{
-		"tests/minimal",
-		"tests/proxy",
-		"tests/old_versions_mount_hosts",
-	}
-	for _, basedir := range tests {
+	for _, basedir := range []string{"tests/minimal", "tests/proxy"} {
 		basedir := basedir
 
 		t.Run(fmt.Sprintf("basedir=%s", basedir), func(t *testing.T) {

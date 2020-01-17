@@ -167,7 +167,8 @@ func (c *IngressController) updateIngressRecords(ingress *v1beta1.Ingress) strin
 
 		fqdn := dns.EnsureDotSuffix(rule.Host)
 		for _, ingress := range ingresses {
-			r := ingress
+			var r dns.Record
+			r = ingress
 			r.FQDN = fqdn
 			records = append(records, r)
 		}

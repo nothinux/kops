@@ -200,13 +200,13 @@ func (e *BindMount) execute(t Executor) error {
 	for _, option := range e.Options {
 		switch option {
 		case "ro":
-			simpleOptions = append(simpleOptions, option)
+			simpleOptions = append(simpleOptions, "ro")
 
 		case "rshared":
 			makeOptions = append(makeOptions, "--make-rshared")
 
-		case "exec", "noexec", "nosuid", "nodev":
-			remountOptions = append(remountOptions, option)
+		case "exec":
+			remountOptions = append(remountOptions, "exec")
 
 		default:
 			return fmt.Errorf("unknown option: %q", option)

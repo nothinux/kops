@@ -269,7 +269,7 @@ func runLifecycleTestAWS(o *LifecycleTestOptions) {
 	h := testutils.NewIntegrationTestHarness(o.t)
 	defer h.Close()
 
-	h.MockKopsVersion("1.15.0")
+	h.MockKopsVersion("1.8.1")
 	cloud := h.SetupMockAWS()
 
 	var beforeIds []string

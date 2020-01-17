@@ -28,6 +28,8 @@ type clusterDiscoveryOS struct {
 	cloud       fi.Cloud
 	osCloud     openstack.OpenstackCloud
 	clusterName string
+
+	zones []string
 }
 
 // ListResources lists the OpenStack resources kops manages

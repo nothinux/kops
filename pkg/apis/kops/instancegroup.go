@@ -28,6 +28,8 @@ const (
 	LabelClusterName = "kops.k8s.io/cluster"
 	// NodeLabelInstanceGroup is a node label set to the name of the instance group
 	NodeLabelInstanceGroup = "kops.k8s.io/instancegroup"
+	// Deprecated - use the new labels & taints node-role.kubernetes.io/master and node-role.kubernetes.io/node
+	TaintNoScheduleMaster15 = "dedicated=master:NoSchedule"
 )
 
 // +genclient
@@ -153,10 +155,6 @@ type InstanceGroupSpec struct {
 	SecurityGroupOverride *string `json:"securityGroupOverride,omitempty"`
 	// InstanceProtection makes new instances in an autoscaling group protected from scale in
 	InstanceProtection *bool `json:"instanceProtection,omitempty"`
-	// SysctlParameters will configure kernel parameters using sysctl(8). When
-	// specified, each parameter must follow the form variable=value, the way
-	// it would appear in sysctl.conf.
-	SysctlParameters []string `json:"sysctlParameters,omitempty"`
 }
 
 const (

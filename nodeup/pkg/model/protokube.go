@@ -55,15 +55,6 @@ func (t *ProtokubeBuilder) Build(c *fi.ModelBuilderContext) error {
 		return nil
 	}
 
-	if protokubeImage := t.NodeupConfig.ProtokubeImage; protokubeImage != nil {
-		c.AddTask(&nodetasks.LoadImageTask{
-			Name:    "protokube",
-			Sources: protokubeImage.Sources,
-			Hash:    protokubeImage.Hash,
-			Runtime: t.Cluster.Spec.ContainerRuntime,
-		})
-	}
-
 	if t.IsMaster {
 		kubeconfig, err := t.BuildPKIKubeconfig("kops")
 		if err != nil {
@@ -193,7 +184,7 @@ func (t *ProtokubeBuilder) ProtokubeImagePullCommand() (string, error) {
 	if t.Cluster.Spec.ContainerRuntime == "docker" {
 		protokubeImagePullCommand = "-/usr/bin/docker pull " + sources[0]
 	} else if t.Cluster.Spec.ContainerRuntime == "containerd" {
-		protokubeImagePullCommand = "-/usr/bin/ctr images pull docker.io/" + sources[0]
+		protokubeImagePullCommand = "-/usr/bin/ctr --namespace k8s.io images pull docker.io/" + sources[0]
 	} else {
 		return "", fmt.Errorf("unable to create protokube image pull command for unsupported runtime %q", t.Cluster.Spec.ContainerRuntime)
 	}
@@ -206,7 +197,7 @@ func (t *ProtokubeBuilder) ProtokubeContainerStopCommand() (string, error) {
 	if t.Cluster.Spec.ContainerRuntime == "docker" {
 		containerStopCommand = "-/usr/bin/docker stop protokube"
 	} else if t.Cluster.Spec.ContainerRuntime == "containerd" {
-		containerStopCommand = "/bin/true"
+		containerStopCommand = "-/usr/bin/ctr --namespace k8s.io task pause protokube"
 	} else {
 		return "", fmt.Errorf("unable to create protokube stop command for unsupported runtime %q", t.Cluster.Spec.ContainerRuntime)
 	}
@@ -219,7 +210,7 @@ func (t *ProtokubeBuilder) ProtokubeContainerRemoveCommand() (string, error) {
 	if t.Cluster.Spec.ContainerRuntime == "docker" {
 		containerRemoveCommand = "-/usr/bin/docker rm protokube"
 	} else if t.Cluster.Spec.ContainerRuntime == "containerd" {
-		containerRemoveCommand = "-/usr/bin/ctr container rm protokube"
+		containerRemoveCommand = "-/usr/bin/ctr --namespace k8s.io container rm protokube"
 	} else {
 		return "", fmt.Errorf("unable to create protokube remove command for unsupported runtime %q", t.Cluster.Spec.ContainerRuntime)
 	}
@@ -272,7 +263,7 @@ func (t *ProtokubeBuilder) ProtokubeContainerRunCommand() (string, error) {
 
 	} else if t.Cluster.Spec.ContainerRuntime == "containerd" {
 		containerRunArgs = append(containerRunArgs, []string{
-			"/usr/bin/ctr run",
+			"/usr/bin/ctr --namespace k8s.io run",
 			"--net-host",
 			"--with-ns pid:/proc/1/ns/pid",
 			"--privileged",
@@ -446,7 +437,10 @@ func (t *ProtokubeBuilder) ProtokubeFlags(k8sVersion semver.Version) (*Protokube
 		}
 	}
 
-	f.InitializeRBAC = fi.Bool(true)
+	// initialize rbac on Kubernetes >= 1.6 and master
+	if k8sVersion.Major == 1 && k8sVersion.Minor >= 6 {
+		f.InitializeRBAC = fi.Bool(true)
+	}
 
 	zone := t.Cluster.Spec.DNSZone
 	if zone != "" {
@@ -507,6 +501,10 @@ func (t *ProtokubeBuilder) ProtokubeFlags(k8sVersion semver.Version) (*Protokube
 
 	if f.DNSInternalSuffix == nil {
 		f.DNSInternalSuffix = fi.String(".internal." + t.Cluster.ObjectMeta.Name)
+	}
+
+	if k8sVersion.Major == 1 && k8sVersion.Minor <= 5 {
+		f.ApplyTaints = fi.Bool(true)
 	}
 
 	if k8sVersion.Major == 1 && k8sVersion.Minor >= 16 {
